@@ -309,8 +309,8 @@ public class Hotel {
                    case 6: viewRecentUpdates(esql, authorisedUser); break;
                    case 7: viewBookingHistoryofHotel(esql); break;
                    case 8: viewRegularCustomers(esql); break;
-                   case 9: placeRoomRepairRequests(esql); break;
-                   case 10: viewRoomRepairHistory(esql); break;
+                   case 9: placeRoomRepairRequests(esql, authorisedUser); break;
+                   case 10: viewRoomRepairHistory(esql,authorisedUser); break;
                    case 20: usermenu = false; break;
                    default : System.out.println("Unrecognized choice!"); break;
                 }
@@ -548,8 +548,58 @@ public class Hotel {
    }
    public static void viewBookingHistoryofHotel(Hotel esql) {}
    public static void viewRegularCustomers(Hotel esql) {}
-   public static void placeRoomRepairRequests(Hotel esql) {}
-   public static void viewRoomRepairHistory(Hotel esql) {}
+   public static void placeRoomRepairRequests(Hotel esql, String authorisedUser) {
+   	try{
+		//make sure you're a manager
+		int ID = Integer.parseInt(authorisedUser);
+                System.out.println("\t"+ID);
+                System.out.print("\tEnter hotelID: ");
+                Scanner input = new Scanner(System.in);
+                int hotelID= input.nextInt();
+                input.nextLine();
+		System.out.print("\tEnter roomNumber: ");
+		int roomNumber= input.nextInt();
+                input.nextLine();
+		System.out.print("\tEnter companyID: ");
+                int companyID= input.nextInt();
+
+                String query = String.format("INSERT INTO roomRepairs (companyID,hotelID,roomNumber,repairDate) VALUES ('%d','%d','%d',CURRENT_DATE)",companyID,hotelID,roomNumber);
+        	esql.executeUpdate(query);
+		int reparID = esql.getCurrSeqVal("roomRepairs_repairID_seq");
+		String query1 = String.format("INSERT INTO roomRepairRequests (managerID,repairID) VALUES ('%d', '%d')",ID,esql.getCurrSeqVal("roomRepairs_repairID_seq"));
+		esql.executeUpdate(query1);
+		//List<List<String>> r = esql.executeQueryAndReturnResult("SELECT * FROM roomRepairs");
+		//System.out.println(r);
+        	System.out.println ("successfully created request with ID#" + esql.getCurrSeqVal("roomRepairs_repairID_seq"));
+	//	String res = ("SELECT * FROM roomRepairRequests");
+		
+        //        System.out.println(esql.executeQueryAndReturnResult(res));
+	}catch(Exception e) {
+                System.err.println(e.getMessage());
+        }
+   }
+   public static void viewRoomRepairHistory(Hotel esql,String authorisedUser) {
+   	try{
+		int ID = Integer.parseInt(authorisedUser);
+		String checker = String.format("SELECT hotelID FROM hotel WHERE  managerUserID = '%d'",ID);
+                List<List<String>> check = esql.executeQueryAndReturnResult(checker);
+		List<Integer> hID = new ArrayList<Integer>();
+                if(check.isEmpty()){
+
+                System.out.print("\tYou have no power here ");
+                return;
+                }
+
+		
+		esql.executeQueryAndPrintResult(String.format("SELECT * FROM roomRepairs WHERE hotelID IN(SELECT hotelID FROM hotel WHERE managerUserID = '%d') ORDER BY repairDate DESC",ID)); 
+		}
+
+
+		
+   	catch(Exception e){
+   	System.err.println(e.getMessage());
+   		}
+   }
 
 }//end HotelA
 
