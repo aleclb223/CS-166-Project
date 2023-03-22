@@ -306,7 +306,7 @@ public class Hotel {
                    case 3: bookRooms(esql); break;
                    case 4: viewRecentBookingsfromCustomer(esql); break;
                    case 5: updateRoomInfo(esql,authorisedUser); break;
-                   case 6: viewRecentUpdates(esql); break;
+                   case 6: viewRecentUpdates(esql, authorisedUser); break;
                    case 7: viewBookingHistoryofHotel(esql); break;
                    case 8: viewRegularCustomers(esql); break;
                    case 9: placeRoomRepairRequests(esql); break;
@@ -520,17 +520,32 @@ public class Hotel {
 			String updateStamp = String.format("UPDATE RoomUpdatesLog SET updatedOn = CURRENT_TIMESTAMP WHERE managerID = '%d' AND hotelID = '%d' AND roomNumber ='%d'",ID,hotelID,roomNumber);
 			esql.executeUpdate(updateStamp);
 			String newStamp = String.format("SELECT updatedOn FROM RoomUpdatesLog WHERE managerID = '%d' AND hotelID = '%d' AND roomNumber ='%d'",ID,hotelID,roomNumber);
-				
 			List<List<String>> nstamp = esql.executeQueryAndReturnResult(newStamp);
 			System.out.println(nstamp);
-		
 		}
-
 	} catch(Exception e){
 		System.err.println(e.getMessage());
 	}
    }
-   public static void viewRecentUpdates(Hotel esql) {}
+   public static void viewRecentUpdates(Hotel esql, String authorisedUser) {
+   	try{
+		// From PDF: Managers can also view the info of the last 5 recent updates of their hotels
+		int ID = Integer.parseInt(authorisedUser);
+		System.out.println("\t"+ID);
+		String updates = String.format("SELECT * FROM roomUpdatesLog WHERE  managerID = '%d' ORDER BY  updatedOn DESC LIMIT 5", ID);
+		List<List<String>> iupdates = esql.executeQueryAndReturnResult(updates);
+		//make look nice how?
+		//
+		for(int i = 0; i<iupdates.size();i++){
+				String formated =("HotelID: "+ iupdates.get(i).get(2)+" Room#: "+iupdates.get(i).get(3)+" Timestamp: "+iupdates.get(i).get(4));
+				System.out.println(formated);
+			}
+
+
+	} catch(Exception e) {
+		System.err.println(e.getMessage());
+	}
+   }
    public static void viewBookingHistoryofHotel(Hotel esql) {}
    public static void viewRegularCustomers(Hotel esql) {}
    public static void placeRoomRepairRequests(Hotel esql) {}
