@@ -303,8 +303,8 @@ public class Hotel {
                 switch (readChoice()){
                    case 1: viewHotels(esql); break;
                    case 2: viewRooms(esql); break;
-                   case 3: bookRooms(esql); break;
-                   case 4: viewRecentBookingsfromCustomer(esql); break;
+                   case 3: bookRooms(esql,authorisedUser); break;
+                   case 4: viewRecentBookingsfromCustomer(esql,authorisedUser); break;
                    case 5: updateRoomInfo(esql,authorisedUser); break;
                    case 6: viewRecentUpdates(esql, authorisedUser); break;
                    case 7: viewBookingHistoryofHotel(esql); break;
@@ -459,9 +459,10 @@ public class Hotel {
 		System.err.println (e.getMessage ());
 	}
    }// end viewRooms
-   public static void bookRooms(Hotel esql) {
+   public static void bookRooms(Hotel esql, String authorisedUser) {
 	   try{
 		String date;
+
 
 		System.out.print("\tNow booking rooms: \n");
 		   System.out.print("\tInput valid hotel ID: \n");
@@ -489,11 +490,12 @@ public class Hotel {
 		 if(isAvailable == 0){
 			 String query3 = String.format("SELECT price FROM rooms WHERE hotelid = '%d' AND roomnumber = '%d'", hotelID, rNum);
 			 System.out.print("Your room is now booked for that date! Your total will be: ") ;
-
-			 int cusID = esql.getNewUserID("SELECT last_value FROM users_userID_seq"); 
+			 esql.executeQueryAndPrintResult(query3);
+			 int cusID = Integer.parseInt(authorisedUser);
 
 			 String query2 = String.format("INSERT INTO roombookings (bookingdate, hotelid, roomnumber, customerid) VALUES ('%s','%d', '%d', '%d')", date, hotelID, rNum, cusID);
-			 esql.executeUpdate(query2);
+
+			esql.executeUpdate(query2);
 		 }else{
 			System.out.print("The selected room is not available. Please try another option.\n");
 		}
@@ -501,11 +503,11 @@ public class Hotel {
 		 System.err.println (e.getMessage());
 	      }	 
    }
-   public static void viewRecentBookingsfromCustomer(Hotel esql) {
+   public static void viewRecentBookingsfromCustomer(Hotel esql,String authorisedUser) {
    	try{
 		System.out.print("\tNow browsing booking history: \n");
 
-		 int cusID = esql.getNewUserID("SELECT last_value FROM users_userID_seq");
+		int cusID = Integer.parseInt(authorisedUser);
 
 		 String query = String.format("SELECT * FROM roombookings WHERE customerid = '%d' ORDER BY bookingdate DESC LIMIT 5",cusID);
 		esql.executeQueryAndPrintResult(query);
@@ -645,6 +647,4 @@ public class Hotel {
    }
 
 }//end HotelA
-
-
 
