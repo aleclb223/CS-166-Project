@@ -307,8 +307,8 @@ public class Hotel {
                    case 4: viewRecentBookingsfromCustomer(esql,authorisedUser); break;
                    case 5: updateRoomInfo(esql,authorisedUser); break;
                    case 6: viewRecentUpdates(esql, authorisedUser); break;
-                   case 7: viewBookingHistoryofHotel(esql); break;
-                   case 8: viewRegularCustomers(esql); break;
+                   case 7: viewBookingHistoryofHotel(esql,authorisedUser); break;
+                   case 8: viewRegularCustomers(esql,authorisedUser); break;
                    case 9: placeRoomRepairRequests(esql, authorisedUser); break;
                    case 10: viewRoomRepairHistory(esql,authorisedUser); break;
                    case 20: usermenu = false; break;
@@ -612,7 +612,16 @@ public class Hotel {
                         int managesHotel = (esql.executeQuery(query2));
 
                         if(managesHotel == 1){
-                                String query = String.format("SELECT customerid FROM roombookings WHERE hotelid = '%d' GROUP BY customerid ORDER BY COUNT (bookingid) DESC LIMIT 5", hotelID);
+
+				System.out.print("Enter start date: ");
+				String range1 = in.readLine();
+				System.out.print("Enter end date: ");
+				String range2 = in.readLine();
+
+
+
+
+                                String query = String.format("SELECT DISTINCT bookingid, hotelid, roomnumber, bookingdate, name FROM roombookings, users WHERE hotelid = '%d' AND bookingdate BETWEEN '%s' AND '%s' AND customerid = userid", hotelID, range1, range2);
 
                                  esql.executeQueryAndPrintResult(query);
                         }
@@ -634,6 +643,7 @@ public class Hotel {
                 System.err.println(e.getMessage());
         }
    }
+
    public static void viewRegularCustomers(Hotel esql, String authorisedUser) { //This
 	   try{
 		
@@ -732,4 +742,3 @@ public class Hotel {
    }
 
 }//end HotelA
-
