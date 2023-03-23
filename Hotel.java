@@ -10,6 +10,8 @@
  *
  */
 
+import java.io.*;
+import java.util.*;
 
 import java.sql.DriverManager;
 import java.sql.Connection;
@@ -24,7 +26,9 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.ArrayList;
 import java.lang.Math;
-
+import java.text.SimpleDateFormat;
+import java.util.Scanner;
+import java.sql.Timestamp;
 /**
  * This class defines a simple embedded SQL utility class that is designed to
  * work with PostgreSQL JDBC drivers.
@@ -301,12 +305,12 @@ public class Hotel {
                    case 2: viewRooms(esql); break;
                    case 3: bookRooms(esql); break;
                    case 4: viewRecentBookingsfromCustomer(esql); break;
-                   case 5: updateRoomInfo(esql); break;
-                   case 6: viewRecentUpdates(esql); break;
+                   case 5: updateRoomInfo(esql,authorisedUser); break;
+                   case 6: viewRecentUpdates(esql, authorisedUser); break;
                    case 7: viewBookingHistoryofHotel(esql); break;
                    case 8: viewRegularCustomers(esql); break;
-                   case 9: placeRoomRepairRequests(esql); break;
-                   case 10: viewRoomRepairHistory(esql); break;
+                   case 9: placeRoomRepairRequests(esql, authorisedUser); break;
+                   case 10: viewRoomRepairHistory(esql,authorisedUser); break;
                    case 20: usermenu = false; break;
                    default : System.out.println("Unrecognized choice!"); break;
                 }
@@ -400,16 +404,193 @@ public class Hotel {
 
 // Rest of the functions definition go in here
 
-   public static void viewHotels(Hotel esql) {}
-   public static void viewRooms(Hotel esql) {}
+   public static void viewHotels(Hotel esql) {
+	try {//might be wrong but you might have to run all the hotel locations and only give the hotels that are 30 or less
+		//change get the input as a double not int
+		//
+
+      		// issues the query instruction
+		Scanner input = new Scanner(System.in);
+		System.out.print("\tEnter Latitude: ");
+		double latitude=input.nextDouble();
+		System.out.print("\tEnter Longitude: ");
+		double longitude= input.nextDouble(); 
+		String query1 = ("SELECT hotelName,latitude,longitude FROM Hotel");
+		List<List<String>> result = esql.executeQueryAndReturnResult(query1); // executes SQL and saves the output
+		for(int i = 0; i<result.size();i++){
+			double hLat = Double.parseDouble(result.get(i).get(1));
+			double hLong = Double.parseDouble(result.get(i).get(2));
+			if(esql.calculateDistance(latitude,longitude,hLat,hLong)<=30){
+				System.out.println(result.get(i).get(0));
+				}
+			}
+	
+        } catch (Exception e)
+    {
+        // do something appropriate with the exception, *at least*:
+	System.out.print("inside----------------------------------------------------------------->>>>>>>>>>>>>> ");
+         System.err.println (e.getMessage ());
+	System.err.println (e.getMessage ());
+        
+    }
+ 
+            // Close resources
+            //if (rs != null) {
+              //  rs.close();
+      
+       
+   }
+   public static void viewRooms(Hotel esql) {
+   	try {
+		Scanner input = new Scanner(System.in);
+		System.out.println("\tEnter Hotel ID: ");
+		int hotelID=input.nextInt();
+		input.nextLine();
+		System.out.println("\tEnter Date (yyyy/MM/dd)ex(2015/05/12) : ");
+		String day =input.nextLine();
+		//SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+		//Date date2 = dateFormat.parse(d);
+
+		System.out.println("\tRooms available on  "+day);
+		esql.executeQueryAndPrintResult(String.format ("SELECT roomNumber,price FROM Rooms WHERE hotelID = '%d' AND roomNumber NOT IN(SELECT roomNumber FROM RoomBookings WHERE hotelID = '%d' AND bookingDate= '%s')",hotelID,hotelID,day)); 
+
+		}
+	 catch (Exception e){
+		System.err.println (e.getMessage ());
+	}
+   }// end viewRooms
    public static void bookRooms(Hotel esql) {}
    public static void viewRecentBookingsfromCustomer(Hotel esql) {}
-   public static void updateRoomInfo(Hotel esql) {}
-   public static void viewRecentUpdates(Hotel esql) {}
+   public static void updateRoomInfo(Hotel esql,String authorisedUser) {
+   //Check if person if manager else return 
+   //call the update executeUpdate look at create user for help on updating the sql 
+   //get hotel id and room number 
+   //only update price and image url of the hotelid for that manager so you gotta check the hotel id with WHERE
+   //update rooms and roomupdatelogs. you maybe can ask user to enter date and time for update logs or use a jave timestamp function or sql trigger
+   //sql return result for the last 5 update so you can sql query the roomupdateslog for the last 5 or top 5 or whatever
+	try{
+		int ID = Integer.parseInt(authorisedUser);
+		System.out.println("\t"+ID);
+		System.out.print("\tEnter hotelID: ");
+		Scanner input = new Scanner(System.in);
+		int hotelID= input.nextInt();
+		input.nextLine();
+		String checker = String.format("SELECT hotelName FROM hotel WHERE hotelID = '%d' AND managerUserID = '%d'",hotelID,ID);
+		List<List<String>> check = esql.executeQueryAndReturnResult(checker);
+		if(check.isEmpty()){
+		
+		System.out.print("\tYou have no power here ");
+		return;
+		}
+		System.out.print("\tEnter roomNumber: ");
+		int roomNumber=input.nextInt();
+                String query = String.format("SELECT price,imageURL FROM Rooms WHERE hotelID = '%d' AND roomNumber ='%d'", hotelID, roomNumber);
+		List<List<String>> result = esql.executeQueryAndReturnResult(query);
+		System.out.println(result); //is this right?
+		if(result.isEmpty()){
+                        System.out.println("aint nothin here!");
+                }else{
+			System.out.print("\tUpdate Price: ");
+			int price=input.nextInt();
+			input.nextLine();
+			System.out.print("\tUpdate imageURL: ");
+			String imageURL=input.nextLine();
+			String query1 = String.format("UPDATE rooms SET  price='%d',imageURL = '%s'  WHERE hotelID = '%d' AND roomNumber = '%d'",price,imageURL,hotelID,roomNumber);
+			esql.executeUpdate(query1);
+                	String query2 = String.format("SELECT price,imageURL FROM Rooms WHERE hotelID = '%d' AND roomNumber ='%d'", hotelID, roomNumber);
+			List<List<String>> result2 = esql.executeQueryAndReturnResult(query2);
+			System.out.println(result2);
+			String oldStamp = String.format("SELECT updatedOn FROM RoomUpdatesLog WHERE managerID = '%d' AND hotelID = '%d' AND roomNumber ='%d'",ID,hotelID,roomNumber);
+			List<List<String>> stamp = esql.executeQueryAndReturnResult(oldStamp);
+			System.out.println(stamp);
+			//make a sql query that will update the time stamp for you.
+			Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+			String timestamp1 = timestamp.toString();
+			String updateStamp = String.format("UPDATE RoomUpdatesLog SET updatedOn = CURRENT_TIMESTAMP WHERE managerID = '%d' AND hotelID = '%d' AND roomNumber ='%d'",ID,hotelID,roomNumber);
+			esql.executeUpdate(updateStamp);
+			String newStamp = String.format("SELECT updatedOn FROM RoomUpdatesLog WHERE managerID = '%d' AND hotelID = '%d' AND roomNumber ='%d'",ID,hotelID,roomNumber);
+			List<List<String>> nstamp = esql.executeQueryAndReturnResult(newStamp);
+			System.out.println(nstamp);
+		}
+	} catch(Exception e){
+		System.err.println(e.getMessage());
+	}
+   }
+   public static void viewRecentUpdates(Hotel esql, String authorisedUser) {
+   	try{
+		// From PDF: Managers can also view the info of the last 5 recent updates of their hotels
+		int ID = Integer.parseInt(authorisedUser);
+		System.out.println("\t"+ID);
+		String updates = String.format("SELECT * FROM roomUpdatesLog WHERE  managerID = '%d' ORDER BY  updatedOn DESC LIMIT 5", ID);
+		List<List<String>> iupdates = esql.executeQueryAndReturnResult(updates);
+		//make look nice how?
+		//
+		for(int i = 0; i<iupdates.size();i++){
+				String formated =("HotelID: "+ iupdates.get(i).get(2)+" Room#: "+iupdates.get(i).get(3)+" Timestamp: "+iupdates.get(i).get(4));
+				System.out.println(formated);
+			}
+
+
+	} catch(Exception e) {
+		System.err.println(e.getMessage());
+	}
+   }
    public static void viewBookingHistoryofHotel(Hotel esql) {}
    public static void viewRegularCustomers(Hotel esql) {}
-   public static void placeRoomRepairRequests(Hotel esql) {}
-   public static void viewRoomRepairHistory(Hotel esql) {}
+   public static void placeRoomRepairRequests(Hotel esql, String authorisedUser) {
+   	try{
+		//make sure you're a manager
+		int ID = Integer.parseInt(authorisedUser);
+                System.out.println("\t"+ID);
+                System.out.print("\tEnter hotelID: ");
+                Scanner input = new Scanner(System.in);
+                int hotelID= input.nextInt();
+                input.nextLine();
+		System.out.print("\tEnter roomNumber: ");
+		int roomNumber= input.nextInt();
+                input.nextLine();
+		System.out.print("\tEnter companyID: ");
+                int companyID= input.nextInt();
 
-}//end Hotel
+                String query = String.format("INSERT INTO roomRepairs (companyID,hotelID,roomNumber,repairDate) VALUES ('%d','%d','%d',CURRENT_DATE)",companyID,hotelID,roomNumber);
+        	esql.executeUpdate(query);
+		int reparID = esql.getCurrSeqVal("roomRepairs_repairID_seq");
+		String query1 = String.format("INSERT INTO roomRepairRequests (managerID,repairID) VALUES ('%d', '%d')",ID,esql.getCurrSeqVal("roomRepairs_repairID_seq"));
+		esql.executeUpdate(query1);
+		//List<List<String>> r = esql.executeQueryAndReturnResult("SELECT * FROM roomRepairs");
+		//System.out.println(r);
+        	System.out.println ("successfully created request with ID#" + esql.getCurrSeqVal("roomRepairs_repairID_seq"));
+	//	String res = ("SELECT * FROM roomRepairRequests");
+		
+        //        System.out.println(esql.executeQueryAndReturnResult(res));
+	}catch(Exception e) {
+                System.err.println(e.getMessage());
+        }
+   }
+   public static void viewRoomRepairHistory(Hotel esql,String authorisedUser) {
+   	try{
+		int ID = Integer.parseInt(authorisedUser);
+		String checker = String.format("SELECT hotelID FROM hotel WHERE  managerUserID = '%d'",ID);
+                List<List<String>> check = esql.executeQueryAndReturnResult(checker);
+		List<Integer> hID = new ArrayList<Integer>();
+                if(check.isEmpty()){
+
+                System.out.print("\tYou have no power here ");
+                return;
+                }
+
+		
+		esql.executeQueryAndPrintResult(String.format("SELECT * FROM roomRepairs WHERE hotelID IN(SELECT hotelID FROM hotel WHERE managerUserID = '%d') ORDER BY repairDate DESC",ID)); 
+		}
+
+
+		
+   	catch(Exception e){
+   	System.err.println(e.getMessage());
+   		}
+   }
+
+}//end HotelA
+
+
 
