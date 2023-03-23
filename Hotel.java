@@ -459,8 +459,62 @@ public class Hotel {
 		System.err.println (e.getMessage ());
 	}
    }// end viewRooms
-   public static void bookRooms(Hotel esql) {}
-   public static void viewRecentBookingsfromCustomer(Hotel esql) {}
+   public static void bookRooms(Hotel esql) {
+	   try{
+		String date;
+
+		System.out.print("\tNow booking rooms: \n");
+		   System.out.print("\tInput valid hotel ID: \n");
+		 Scanner in1 = new Scanner(System.in);
+		 int hotelID = in1.nextInt(); 
+
+		 System.out.print("\tInput valid room number: \n");
+		 Scanner in2 = new Scanner(System.in);
+		 int rNum = in2.nextInt();
+
+
+		 System.out.print("\tInput valid date: \n");
+		 date = in.readLine();
+
+		 String query = String.format("SELECT * FROM roombookings WHERE bookingdate = '%s' AND hotelid = '%d' AND roomnumber = '%d'", date, hotelID, rNum);
+
+		// esql.executeQueryAndPrintResult(query);
+
+		// System.out.print(query);
+
+		 int isAvailable = (esql.executeQuery(query));
+		 System.out.print("\n");
+
+
+		 if(isAvailable == 0){
+			 String query3 = String.format("SELECT price FROM rooms WHERE hotelid = '%d' AND roomnumber = '%d'", hotelID, rNum);
+			 System.out.print("Your room is now booked for that date! Your total will be: ") ;
+
+			 int cusID = esql.getNewUserID("SELECT last_value FROM users_userID_seq"); 
+
+			 String query2 = String.format("INSERT INTO roombookings (bookingdate, hotelid, roomnumber, customerid) VALUES ('%s','%d', '%d', '%d')", date, hotelID, rNum, cusID);
+			 esql.executeUpdate(query2);
+		 }else{
+			System.out.print("The selected room is not available. Please try another option.\n");
+		}
+	}catch(Exception e){
+		 System.err.println (e.getMessage());
+	      }	 
+   }
+   public static void viewRecentBookingsfromCustomer(Hotel esql) {
+   	try{
+		System.out.print("\tNow browsing booking history: \n");
+
+		 int cusID = esql.getNewUserID("SELECT last_value FROM users_userID_seq");
+
+		 String query = String.format("SELECT * FROM roombookings WHERE customerid = '%d' ORDER BY bookingdate DESC LIMIT 5",cusID);
+		esql.executeQueryAndPrintResult(query);
+	 	System.out.print("\n");
+	      }catch(Exception e){
+		 System.err.println (e.getMessage());
+	      }
+
+   }
    public static void updateRoomInfo(Hotel esql,String authorisedUser) {
    //Check if person if manager else return 
    //call the update executeUpdate look at create user for help on updating the sql 
