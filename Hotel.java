@@ -591,8 +591,93 @@ public class Hotel {
 		System.err.println(e.getMessage());
 	}
    }
-   public static void viewBookingHistoryofHotel(Hotel esql) {}
-   public static void viewRegularCustomers(Hotel esql) {}
+   public static void viewBookingHistoryofHotel(Hotel esql, String authorisedUser) { //This
+	 try{
+
+                int ID = Integer.parseInt(authorisedUser);
+
+
+                String query1 = String.format("SELECT DISTINCT manageruserid FROM hotel WHERE manageruserid = '%d'", ID);
+                int isManager = (esql.executeQuery(query1));
+
+                if(isManager == 1){
+
+                        System.out.print("You are a manager.");
+                        System.out.print("\tEnter hotelID: ");
+                        Scanner input = new Scanner(System.in);
+                        int hotelID= input.nextInt();
+                        input.nextLine();
+
+                        String query2 = String.format("SELECT * FROM hotel WHERE manageruserid = '%d' AND hotelid = '%d'", ID, hotelID);
+                        int managesHotel = (esql.executeQuery(query2));
+
+                        if(managesHotel == 1){
+                                String query = String.format("SELECT customerid FROM roombookings WHERE hotelid = '%d' GROUP BY customerid ORDER BY COUNT (bookingid) DESC LIMIT 5", hotelID);
+
+                                 esql.executeQueryAndPrintResult(query);
+                        }
+                        else{
+                                System.out.print("You do not manage this hotel.");
+                        }
+
+
+
+
+                }
+                else{
+
+                        System.out.print("You are not an authorized manager.\n");
+
+
+		}
+        }catch(Exception e) {
+                System.err.println(e.getMessage());
+        }
+   }
+   public static void viewRegularCustomers(Hotel esql, String authorisedUser) { //This
+	   try{
+		
+		int ID = Integer.parseInt(authorisedUser);		
+
+
+		String query1 = String.format("SELECT DISTINCT manageruserid FROM hotel WHERE manageruserid = '%d'", ID);
+		int isManager = (esql.executeQuery(query1));
+		
+		if(isManager == 1){ 
+
+			System.out.print("You are a manager.");
+			System.out.print("\tEnter hotelID: ");
+                	Scanner input = new Scanner(System.in);
+                	int hotelID= input.nextInt();
+                	input.nextLine();
+
+			String query2 = String.format("SELECT * FROM hotel WHERE manageruserid = '%d' AND hotelid = '%d'", ID, hotelID);
+		        int managesHotel = (esql.executeQuery(query2));	
+
+			if(managesHotel == 1){
+				String query = String.format("SELECT customerid FROM roombookings WHERE hotelid = '%d' GROUP BY customerid ORDER BY COUNT (bookingid) DESC LIMIT 5", hotelID);
+
+               			 esql.executeQueryAndPrintResult(query);
+			}
+			else{
+				System.out.print("You do not manage this hotel.");
+			}
+
+
+
+
+		}
+		else{
+
+			System.out.print("You are not an authorized manager.\n");
+
+}
+
+ 
+	}catch(Exception e) {
+                System.err.println(e.getMessage());
+        }
+   }
    public static void placeRoomRepairRequests(Hotel esql, String authorisedUser) {
    	try{
 		//make sure you're a manager
